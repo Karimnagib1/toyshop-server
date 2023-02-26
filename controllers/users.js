@@ -1,7 +1,9 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const keys = require("../config/keys");
-const sqlQuery = require("../config/db.js");
+// const sqlQuery = require("../config/db.js");
+
+const User = require('../models/user');
 
 const validateRegisterInput = require("../validation/register");
 const validateLoginInput = require("../validation/login");
@@ -16,8 +18,9 @@ exports.postLogin = (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   // Find user by email
-  sqlQuery(`SELECT * FROM users WHERE email = '${email}'`)
-  .then(users => users[0])
+  // sqlQuery(`SELECT * FROM users WHERE email = '${email}'`)
+  // .then(users => users[0])
+  User.findOne({where: {email: email}})
   .then((user) => {
     // Check if user exists
     if (!user) {
@@ -64,8 +67,9 @@ exports.postRegister = (req, res) => {
   const name = req.body.name;
   const email = req.body.email;
   let password = req.body.password;
-  sqlQuery(`SELECT * FROM users WHERE email = '${email}'`)
-  .then(users => users[0])
+  User.findOne({where: {email: email}})
+  // sqlQuery(`SELECT * FROM users WHERE email = '${email}'`)
+  // .then(users => users[0])
   .then((user) => {
     if (user) {
       return res.status(400).json({ email: "Email already exists" });
@@ -74,11 +78,19 @@ exports.postRegister = (req, res) => {
       bcrypt.genSalt(10, (err, salt) => {
         bcrypt.hash(password, salt, (err, hash) => {
             if (err) throw err;
-            sqlQuery(`INSERT INTO users (name, email, password) VALUES ('${name}','${email}','${hash}')`)
-            .then((user) => res.json(user))
-            .catch((err) => console.log(err));
+            User.create({
+              name: name,
+              email: email,
+              password: hash
+            })
+            // sqlQuery(`INSERT INTO users (name, email, password) VALUES ('${name}','${email}','${hash}')`)
+            .then((user) => {
+                res.json(user);       
+            })
+            .catch((err) => console.log("user not saved!" ,err));
         });
       });
     }
-  });
+  })
+  .catch(err => console.log(err));
 };

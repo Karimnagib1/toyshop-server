@@ -1,6 +1,11 @@
-const sqlQuery = require("../config/db");
+// const sqlQuery = require("../config/db");
+const {Op} = require("sequelize");
+const Product = require('../models/product');
 exports.getProducts = (req, res, next) => {
-  sqlQuery("SELECT * FROM products ORDER BY id ASC")
+  // sqlQuery("SELECT * FROM products ORDER BY id ASC")
+    Product.findAll({order: [
+      ['id', 'ASC'],
+    ]})
     .then((products) => {
       res.json({ products: products, total: products.length });
     })
@@ -11,7 +16,8 @@ exports.getProducts = (req, res, next) => {
 
 exports.getProductsByCategory = (req, res, next) => {
   const category = req.params.category;
-  sqlQuery(`SELECT * FROM products WHERE category = '${category}'`)
+  // sqlQuery(`SELECT * FROM products WHERE category = '${category}'`)
+    Product.findAll({where: {category: category}})
     .then((products) => {
       console.log(products);
       res.json({
@@ -24,8 +30,9 @@ exports.getProductsByCategory = (req, res, next) => {
 
 exports.getProductById = (req, res, next) => {
   const id = req.params.id;
-  sqlQuery(`SELECT * FROM products WHERE id = '${id}'`)
-    .then((products) => products[0])
+  // sqlQuery(`SELECT * FROM products WHERE id = '${id}'`)
+    Product.findByPk(id)
+    // .then((products) => products[0])
     .then((product) => {
       if (!product) {
         throw Error("Product not found!");
@@ -42,9 +49,16 @@ exports.getProductById = (req, res, next) => {
 exports.getSearchProducts = (req, res, next) => {
   const term = req.query.q;
   const cTerm = term.charAt(0).toUpperCase() + term.slice(1);
-  sqlQuery(
-    `SELECT * FROM products WHere title Like '%${term}%' OR description LIKE '%${term}%' OR title LIKE '%${cTerm}%' OR description LIKE '%${cTerm}%' OR brand LIKE '%${term}%' OR category LIKE '%${term}%';`
-  )
+  // sqlQuery(
+  //   `SELECT * FROM products WHere title Like '%${term}%' OR description LIKE '%${term}%' OR title LIKE '%${cTerm}%' OR description LIKE '%${cTerm}%' OR brand LIKE '%${term}%' OR category LIKE '%${term}%';`
+  // )
+  Product.findAll({where: { [Op.or]: [
+    {title: { [Op.like] : `%${term}%`}},
+    {title: { [Op.like] : `%${cTerm}%`}},
+    {description: { [Op.like] : `%${term}%`}},
+    {brand: { [Op.like] : `%${term}%`}},
+    {category: {[Op.like]: `%${term}%`}}
+  ]}})
     .then((products) => {
       res.json({ products: products, total: products.length });
     })
@@ -67,9 +81,21 @@ exports.postAddProduct = (req, res, next) => {
   const userID = req.user.id;
   console.log(req.user);
   const thumbnailURL = process.env.BACKEND_URL  + thumbnail.path.replace("\\", "/");
-  sqlQuery(
-    `INSERT INTO products (title, description, price, discountPercentage,stock, brand, category, thumbnail, seller_id) VALUES ('${title}', '${description}', ${price}, ${Number(discount)}, ${stock},'${brand}', '${category}', '${thumbnailURL}', ${userID})`
-  )
+  // sqlQuery(
+  //   `INSERT INTO products (title, description, price, discountPercentage,stock, brand, category, thumbnail, seller_id) VALUES ('${title}', '${description}', ${price}, ${Number(discount)}, ${stock},'${brand}', '${category}', '${thumbnailURL}', ${userID})`
+  // )
+  Product.create({
+    title: title,
+    description: description,
+    price: price,
+    discount: discount,
+    stock: stock,
+    brand: brand,
+    category: category,
+    thumbnail: thumbnailURL,
+    sellerId: userID
+
+  })
   .then(r => {
     res.send();
   })

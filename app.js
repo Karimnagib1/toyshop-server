@@ -4,6 +4,8 @@ const multer = require("multer");
 const path = require('path');
 require("dotenv").config();
 
+
+
 const app = express();
 const passport = require("passport");
 const usersRouter = require("./routes/users");
@@ -11,6 +13,7 @@ const productsRouter = require("./routes/products");
 const cartsRouter = require("./routes/carts");
 const cors = require("cors");
 const port = process.env.PORT || 5000; 
+
 
 
 app.use('/images', express.static(path.join(__dirname, 'images')));

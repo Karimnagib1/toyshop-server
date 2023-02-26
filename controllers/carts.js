@@ -1,5 +1,5 @@
 const sqlQuery = require("../config/db");
-
+const Cart = require('../models/cart');
 exports.getCart = (req, res, next) => {
   const userId = req.user.id;
   const sql = `select * from carts
